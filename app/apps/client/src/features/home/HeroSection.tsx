@@ -108,7 +108,7 @@ export function HeroSection() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50 font-semibold px-8 py-6 text-base rounded-xl transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm"
+                  className="border-2 border-gold/60 text-gold hover:bg-gold/10 hover:border-gold font-semibold px-8 py-6 text-base rounded-xl transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm"
                 >
                   Start Your Journey
                 </Button>
