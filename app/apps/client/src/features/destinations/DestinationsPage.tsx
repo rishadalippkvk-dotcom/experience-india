@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Star, MapPin, SlidersHorizontal, X } from 'lucide-react';
+import { Search, Star, MapPin, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { Input } from '@/shared/ui/input';
 import { Button } from '@/shared/ui/button';
-import { destinations } from '@/shared/data/destinations';
+import type { Destination } from '@/shared/types';
 
 type FilterCategory = 'all' | 'history' | 'mystery' | 'food' | 'hostels' | 'nature' | 'top-rated';
 
@@ -13,8 +13,26 @@ export function DestinationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const fetchDestinations = async () => {
+      try {
+        const response = await fetch('/api/destinations');
+        if (response.ok) {
+          const data = await response.json();
+          setDestinations(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch destinations:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDestinations();
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -56,7 +74,7 @@ export function DestinationsPage() {
     }
 
     return result;
-  }, [activeFilter, searchQuery]);
+  }, [activeFilter, searchQuery, destinations]);
 
   const filterButtons: { label: string; value: FilterCategory }[] = [
     { label: 'All', value: 'all' },
@@ -166,88 +184,97 @@ export function DestinationsPage() {
           </div>
         )}
 
-        {/* Results Count */}
-        <div className="mb-6 text-text-secondary text-sm">
-          Showing {filteredDestinations.length} destination{filteredDestinations.length !== 1 ? 's' : ''}
-        </div>
-
-        {/* Destinations Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDestinations.map((destination, index) => (
-            <Link
-              key={destination.id}
-              to={`/destination/${destination.id}`}
-              className={`group cursor-pointer transition-all duration-500 ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-              }`}
-              style={{ transitionDelay: `${300 + index * 80}ms` }}
-            >
-              <div className="relative bg-white rounded-2xl overflow-hidden shadow-soft transition-all duration-500 group-hover:shadow-lift group-hover:-translate-y-2">
-                {/* Image */}
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={destination.image}
-                    alt={destination.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                  
-                  {/* Rating Badge */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full">
-                    <Star className="w-3.5 h-3.5 fill-star text-star" />
-                    <span className="text-xs font-semibold text-text-primary">{destination.rating}</span>
-                  </div>
-
-                  {/* Category Badge */}
-                  <div className="absolute top-3 left-3 px-3 py-1 bg-gold/90 backdrop-blur-sm rounded-full">
-                    <span className="text-xs font-medium text-white capitalize">{destination.category}</span>
-                  </div>
-
-                  {/* Location */}
-                  <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm font-medium">{destination.location}</span>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <h3 className="font-display text-xl text-text-primary font-semibold mb-1 group-hover:text-gold transition-colors duration-300">
-                    {destination.name}
-                  </h3>
-                  <p className="text-gold text-sm font-medium mb-2">{destination.tagline}</p>
-                  <p className="text-text-secondary text-sm leading-relaxed line-clamp-2">
-                    {destination.description}
-                  </p>
-                  
-                  {/* Meta Info */}
-                  <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
-                    <div className="text-xs text-text-secondary">
-                      <span className="font-medium">{destination.reviewCount}</span> reviews
-                    </div>
-                    <div className="text-xs text-text-secondary">
-                      <span className="font-medium">{destination.duration}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredDestinations.length === 0 && (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 rounded-full bg-beige flex items-center justify-center mx-auto mb-4">
-              <Search className="w-10 h-10 text-text-secondary/50" />
-            </div>
-            <h3 className="font-display text-2xl text-text-primary font-semibold mb-2">
-              No destinations found
-            </h3>
-            <p className="text-text-secondary">
-              Try adjusting your search or filters
-            </p>
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-gold animate-spin" />
           </div>
+        ) : (
+          <>
+            {/* Results Count */}
+            <div className="mb-6 text-text-secondary text-sm">
+              Showing {filteredDestinations.length} destination{filteredDestinations.length !== 1 ? 's' : ''}
+            </div>
+
+            {/* Destinations Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDestinations.map((destination, index) => (
+                <Link
+                  key={destination._id || destination.id}
+                  to={`/destination/${destination._id}`}
+                  className={`group cursor-pointer transition-all duration-500 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+                  }`}
+                  style={{ transitionDelay: `${300 + index * 80}ms` }}
+                >
+                  <div className="relative bg-white rounded-2xl overflow-hidden shadow-soft transition-all duration-500 group-hover:shadow-lift group-hover:-translate-y-2">
+                    {/* Image */}
+                    <div className="relative h-56 overflow-hidden">
+                      <img
+                        src={destination.image}
+                        alt={destination.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                      
+                      {/* Rating Badge */}
+                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full">
+                        <Star className="w-3.5 h-3.5 fill-star text-star" />
+                        <span className="text-xs font-semibold text-text-primary">{destination.rating}</span>
+                      </div>
+
+                      {/* Category Badge */}
+                      <div className="absolute top-3 left-3 px-3 py-1 bg-gold/90 backdrop-blur-sm rounded-full">
+                        <span className="text-xs font-medium text-white capitalize">{destination.category}</span>
+                      </div>
+
+                      {/* Location */}
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
+                        <MapPin className="w-4 h-4" />
+                        <span className="text-sm font-medium">{destination.location}</span>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      <h3 className="font-display text-xl text-text-primary font-semibold mb-1 group-hover:text-gold transition-colors duration-300">
+                        {destination.name}
+                      </h3>
+                      <p className="text-gold text-sm font-medium mb-2">{destination.tagline}</p>
+                      <p className="text-text-secondary text-sm leading-relaxed line-clamp-2">
+                        {destination.description}
+                      </p>
+                      
+                      {/* Meta Info */}
+                      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
+                        <div className="text-xs text-text-secondary">
+                          <span className="font-medium">{destination.reviewCount}</span> reviews
+                        </div>
+                        <div className="text-xs text-text-secondary">
+                          <span className="font-medium">{destination.duration}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {filteredDestinations.length === 0 && (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 rounded-full bg-beige flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-10 h-10 text-text-secondary/50" />
+                </div>
+                <h3 className="font-display text-2xl text-text-primary font-semibold mb-2">
+                  No destinations found
+                </h3>
+                <p className="text-text-secondary">
+                  Try adjusting your search or filters
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

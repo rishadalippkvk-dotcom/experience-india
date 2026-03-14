@@ -3,6 +3,7 @@ import { Plus, Search, Edit2, Trash2, Star, MapPin, X, Check, Wifi, Wind, Coffee
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
+import { ImageUpload } from '@/shared/ui/image-upload';
 import { toast } from 'sonner';
 import type { Hostel, Destination } from '@/shared/types';
 
@@ -285,6 +286,13 @@ export function HostelsManager() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Hostel name"
                 className="rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-1 block">Image</label>
+              <ImageUpload
+                value={formData.image}
+                onChange={(url: string) => setFormData({ ...formData, image: url })}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from '@/shared/ui/Navbar';
 import { Footer } from '@/shared/ui/Footer';
 import { Toaster } from '@/shared/ui/sonner';
@@ -54,28 +54,24 @@ function App() {
     <AdminProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/*" element={<MainLayout />} />
-
-          {/* Admin Routes */}
+          {/* Admin Routes - must come before the public wildcard */}
           <Route path="/admin" element={<AdminLoginPage />} />
           <Route
-            path="/admin/dashboard"
             element={
               <ProtectedRoute>
                 <AdminDashboard />
               </ProtectedRoute>
             }
           >
-            <Route index element={<DashboardOverview />} />
-            <Route path="destinations" element={<DestinationsManager />} />
-            <Route path="food-spots" element={<FoodSpotsManager />} />
-            <Route path="hostels" element={<HostelsManager />} />
-            <Route path="reviews" element={<ReviewsManager />} />
+            <Route path="/admin/dashboard" element={<DashboardOverview />} />
+            <Route path="/admin/destinations" element={<DestinationsManager />} />
+            <Route path="/admin/food-spots" element={<FoodSpotsManager />} />
+            <Route path="/admin/hostels" element={<HostelsManager />} />
+            <Route path="/admin/reviews" element={<ReviewsManager />} />
           </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Public Routes */}
+          <Route path="/*" element={<MainLayout />} />
         </Routes>
         <Toaster />
       </BrowserRouter>

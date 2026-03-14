@@ -3,6 +3,7 @@ import { Plus, Search, Edit2, Trash2, Star, MapPin, X, Check } from 'lucide-reac
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
+import { ImageUpload } from '@/shared/ui/image-upload';
 import { toast } from 'sonner';
 import type { Destination } from '@/shared/types';
 
@@ -278,6 +279,13 @@ export function DestinationsManager() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Destination name"
                   className="rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1 block">Image</label>
+                <ImageUpload
+                  value={formData.image}
+                  onChange={(url) => setFormData({ ...formData, image: url })}
                 />
               </div>
               <div>

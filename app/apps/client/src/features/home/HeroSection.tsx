@@ -10,17 +10,17 @@ export function HeroSection() {
   useEffect(() => {
     const handleScroll = () => {
       if (!heroRef.current || !contentRef.current) return;
-      
+
       const scrollY = window.scrollY;
       const heroHeight = heroRef.current.offsetHeight;
       const progress = Math.min(scrollY / heroHeight, 1);
-      
+
       // Parallax effect on image
       const img = heroRef.current.querySelector('img');
       if (img) {
         img.style.transform = `scale(${1 + progress * 0.15}) translateY(${-progress * 100}px)`;
       }
-      
+
       // Fade out content
       contentRef.current.style.opacity = `${1 - progress * 1.5}`;
       contentRef.current.style.transform = `translateY(${-progress * 50}px)`;
@@ -31,7 +31,7 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section 
+    <section
       ref={heroRef}
       className="relative min-h-screen w-full overflow-hidden"
     >
@@ -64,7 +64,7 @@ export function HeroSection() {
       </div>
 
       {/* Content */}
-      <div 
+      <div
         ref={contentRef}
         className="relative z-10 min-h-screen flex items-center"
       >
@@ -89,7 +89,7 @@ export function HeroSection() {
 
             {/* Subheadline */}
             <p className="text-lg sm:text-xl text-white/80 font-body leading-relaxed mb-10 max-w-xl animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-              Explore culture, history, mystery, and local life across incredible destinations. 
+              Explore culture, history, mystery, and local life across incredible destinations.
               Your journey through the heart of India begins here.
             </p>
 

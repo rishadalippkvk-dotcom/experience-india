@@ -4,11 +4,17 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './modules/auth/routes.js';
 import destinationRoutes from './modules/destinations/routes.js';
+import uploadRoutes from './modules/upload/routes.js';
 import User from './modules/auth/model.js';
+import seedDestinations from './seed/seedDestinations.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-connectDB();
+await connectDB();
 
 const app = express();
 
@@ -17,6 +23,10 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Static folders
+app.use('/uploads', express.static('uploads'));
 
 app.get('/', (req, res) => {
     res.send('API is running...');
@@ -41,6 +51,7 @@ const seedAdmin = async () => {
 };
 
 seedAdmin();
+seedDestinations();
 
 const PORT = process.env.PORT || 5000;
 

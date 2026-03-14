@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, History, Ghost, UtensilsCrossed, Home } from 'lucide-react';
-import { categories } from '@/shared/data/destinations';
+import type { Destination, Category } from '@/shared/types';
 
 const iconMap: Record<string, React.ElementType> = {
   history: History,
@@ -13,8 +13,45 @@ const iconMap: Record<string, React.ElementType> = {
 export function CategoryExplorer() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/destinations');
+        if (response.ok) {
+          const destinations: Destination[] = await response.json();
+          // Build categories dynamically from destinations
+          const categoryMap: Record<string, number> = {};
+          destinations.forEach((d) => {
+            categoryMap[d.category] = (categoryMap[d.category] || 0) + 1;
+          });
+
+          const categoryMeta: Record<string, { name: string; description: string; image: string }> = {
+            history: { name: 'History', description: 'Journey Through Time', image: '/history-hampi.jpg' },
+            mystery: { name: 'Mystery', description: 'Uncover the Unknown', image: '/mystery-bhangarh.jpg' },
+            food: { name: 'Food', description: 'Taste the Culture', image: '/food-street.jpg' },
+            hostels: { name: 'Hostels', description: 'Stay with Locals', image: '/hostel-interior.jpg' },
+            nature: { name: 'Nature', description: 'Explore the Wild', image: '/kerala.jpg' },
+          };
+
+          const builtCategories: Category[] = Object.entries(categoryMap).map(([id, count]) => ({
+            id,
+            name: categoryMeta[id]?.name || id.charAt(0).toUpperCase() + id.slice(1),
+            description: categoryMeta[id]?.description || 'Explore destinations',
+            image: categoryMeta[id]?.image || '/hero-bg.jpg',
+            count,
+          }));
+
+          setCategories(builtCategories);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
+    fetchCategories();
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

@@ -3,28 +3,53 @@ import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, Star, MapPin, Clock, Calendar, 
   History, Ghost, UtensilsCrossed, Home, MessageSquare,
-  Send, User
+  Send, User, Loader2
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
-import { getDestinationById } from '@/shared/data/destinations';
 import { toast } from 'sonner';
-import type { Review } from '@/shared/types';
+import type { Destination, Review } from '@/shared/types';
 
 export function DestinationDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const destination = getDestinationById(id || '');
+  const [destination, setDestination] = useState<Destination | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
-  const [reviews, setReviews] = useState<Review[]>(destination?.reviews || []);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [newReview, setNewReview] = useState({ author: '', rating: 0, content: '' });
   const [hoveredStar, setHoveredStar] = useState(0);
 
   useEffect(() => {
+    const fetchDestination = async () => {
+      try {
+        const response = await fetch(`/api/destinations/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDestination(data);
+          const approvedReviews = (data.reviews || []).filter((r: Review) => r.approved);
+          setReviews(approvedReviews);
+        }
+      } catch (error) {
+        console.error('Failed to fetch destination:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDestination();
     setIsVisible(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen bg-cream pt-32 pb-24 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-gold animate-spin" />
+      </div>
+    );
+  }
 
   if (!destination) {
     return (
@@ -40,19 +65,33 @@ export function DestinationDetailPage() {
     );
   }
 
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newReview.author && newReview.rating && newReview.content) {
-      const review: Review = {
-        id: Date.now().toString(),
-        author: newReview.author,
-        rating: newReview.rating,
-        date: new Date().toISOString().split('T')[0],
-        content: newReview.content,
-      };
-      setReviews([review, ...reviews]);
-      setNewReview({ author: '', rating: 0, content: '' });
-      toast.success('Review submitted successfully!');
+      try {
+        const response = await fetch(`/api/destinations/${destination._id}/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            author: newReview.author,
+            rating: newReview.rating,
+            date: new Date().toISOString().split('T')[0],
+            content: newReview.content,
+          }),
+        });
+
+        if (response.ok) {
+          const updatedDest = await response.json();
+          const approvedReviews = (updatedDest.reviews || []).filter((r: Review) => r.approved);
+          setReviews(approvedReviews);
+          setNewReview({ author: '', rating: 0, content: '' });
+          toast.success('Review submitted successfully! It will appear once approved by an admin.');
+        } else {
+          toast.error('Failed to submit review');
+        }
+      } catch (error) {
+        toast.error('Error submitting review');
+      }
     }
   };
 
@@ -245,7 +284,7 @@ export function DestinationDetailPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {destination.foodSpots.map((spot) => (
-                  <div key={spot.id} className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 hover:-translate-y-1">
+                  <div key={spot._id || spot.id} className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 hover:-translate-y-1">
                     <div className="h-40 overflow-hidden">
                       <img src={spot.image} alt={spot.name} className="w-full h-full object-cover" />
                     </div>
@@ -277,7 +316,7 @@ export function DestinationDetailPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {destination.hostels.map((hostel) => (
-                  <div key={hostel.id} className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 hover:-translate-y-1">
+                  <div key={hostel._id || hostel.id} className="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 hover:-translate-y-1">
                     <div className="h-40 overflow-hidden">
                       <img src={hostel.image} alt={hostel.name} className="w-full h-full object-cover" />
                     </div>
@@ -369,7 +408,7 @@ export function DestinationDetailPage() {
             <div className="space-y-4">
               {reviews.length > 0 ? (
                 reviews.map((review) => (
-                  <div key={review.id} className="bg-white rounded-2xl p-6 shadow-soft">
+                  <div key={review._id || review.id} className="bg-white rounded-2xl p-6 shadow-soft">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-beige flex items-center justify-center">

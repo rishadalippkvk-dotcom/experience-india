@@ -77,7 +77,7 @@ export function FeaturedDestinations() {
           {destinations.map((destination, index) => (
             <Link
               key={destination.id}
-              to={`/destination/${destination.id}`}
+              to={`/destination/${destination._id}`}
               className={`group cursor-pointer transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'
                 }`}
               style={{
